@@ -35,6 +35,8 @@ class TwitterOAuth extends Config
     private $signatureMethod;
     /** @var int Number of attempts we made for the request */
     private $attempts = 0;
+    /** @var string Twitter API subdomain to make the request against */
+    private $subdomain = 'api';
 
     /**
      * Constructor
@@ -59,6 +61,18 @@ class TwitterOAuth extends Config
         if (empty($oauthToken) && !empty($oauthTokenSecret)) {
             $this->setBearer($oauthTokenSecret);
         }
+    }
+
+    public function __get(string $name) {
+      var_dump($name);
+      $this->subdomain = $name;
+      return $this;
+    }
+
+    public function __call(string $name, $args) {
+      var_dump($name);
+      $this->subdomain = $name;
+      return $this;
     }
 
     /**
