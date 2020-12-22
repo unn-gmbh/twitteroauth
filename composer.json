@@ -39,6 +39,7 @@
     "php": "^7.0",
     "ext-curl": "*",
     "ext-json": "*",
+    "ext-soap": "*",
     "composer/ca-bundle": "^1.2"
   },
   "require-dev": {
