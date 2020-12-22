@@ -14,10 +14,10 @@
   },
   "scripts": {
     "fix": "concurrently npm:fix:*",
-    "fix:phpcbf": "./vendor/bin/phpcbf src tests --standard=PSR12",
+    "fix:phpcbf": "./vendor/bin/phpcbf src tests",
     "fix:prettier": "prettier . --write",
     "lint": "concurrently npm:lint:*",
-    "lint:phpcs": "./vendor/bin/phpcs src tests --standard=PSR12",
+    "lint:phpcs": "./vendor/bin/phpcs src tests",
     "lint:prettier": "prettier . --check",
     "postinstall": "composer install --no-interaction",
     "test": "./vendor/bin/phpunit"
