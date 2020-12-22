@@ -66,10 +66,8 @@ class TwitterOAuth extends Config
      * @param string $oauthToken
      * @param string $oauthTokenSecret
      */
-    public function setOauthToken(
-        string $oauthToken,
-        string $oauthTokenSecret
-    ) {
+    public function setOauthToken(string $oauthToken, string $oauthTokenSecret)
+    {
         $this->token = new Token($oauthToken, $oauthTokenSecret);
         $this->bearer = null;
     }
