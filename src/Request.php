@@ -20,18 +20,18 @@ class Request
     /**
      * Constructor
      *
-     * @param string     $httpMethod
-     * @param string     $httpUrl
-     * @param array|null $parameters
+     * @param string $httpMethod
+     * @param string $httpUrl
+     * @param array  $parameters
      */
     public function __construct(
         string $httpMethod,
         string $httpUrl,
-        ?array $parameters = []
+        array $parameters = []
     ) {
         $parameters = array_merge(
             Util::parseParameters(parse_url($httpUrl, PHP_URL_QUERY)),
-            $parameters,
+            $parameters
         );
         $this->parameters = $parameters;
         $this->httpMethod = $httpMethod;
@@ -41,11 +41,12 @@ class Request
     /**
      * pretty much a helper function to set up the request
      *
-     * @param Consumer $consumer
-     * @param Token    $token
-     * @param string   $httpMethod
-     * @param string   $httpUrl
-     * @param array    $parameters
+     * @param Consumer   $consumer
+     * @param Token|null $token
+     * @param string     $httpMethod
+     * @param string     $httpUrl
+     * @param array      $parameters
+     * @param bool       $json
      *
      * @return Request
      */
@@ -92,7 +93,7 @@ class Request
      *
      * @return string|null
      */
-    public function getParameter(string $name): ?string
+    public function getParameter(string $name)
     {
         return isset($this->parameters[$name])
             ? $this->parameters[$name]
@@ -110,7 +111,7 @@ class Request
     /**
      * @param string $name
      */
-    public function removeParameter(string $name): void
+    public function removeParameter(string $name)
     {
         unset($this->parameters[$name]);
     }
@@ -224,7 +225,7 @@ class Request
             }
             if (is_array($v)) {
                 throw new TwitterOAuthException(
-                    'Arrays not supported in headers',
+                    'Arrays not supported in headers'
                 );
             }
             $out .= $first ? ' ' : ', ';
@@ -258,7 +259,7 @@ class Request
     ) {
         $this->setParameter(
             'oauth_signature_method',
-            $signatureMethod->getName(),
+            $signatureMethod->getName()
         );
         $signature = $this->buildSignature($signatureMethod, $consumer, $token);
         $this->setParameter('oauth_signature', $signature);

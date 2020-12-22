@@ -11,22 +11,22 @@ namespace Abraham\TwitterOAuth;
 
 class Consumer
 {
-    /** @var string  */
+    /** @var string|null  */
     public $key;
-    /** @var string  */
+    /** @var string|null  */
     public $secret;
     /** @var string|null  */
     public $callbackUrl;
 
     /**
-     * @param string|null $key
-     * @param string|null $secret
-     * @param null $callbackUrl
+     * @param string $key
+     * @param string $secret
+     * @param string|null $callbackUrl
      */
     public function __construct(
-        ?string $key,
-        ?string $secret,
-        ?string $callbackUrl = null
+        string $key = null,
+        string $secret = null,
+        string $callbackUrl = null
     ) {
         $this->key = $key;
         $this->secret = $secret;
@@ -38,6 +38,6 @@ class Consumer
      */
     public function __toString()
     {
-        return "Consumer[key=$this->key,secret=$this->secret]";
+        return sprintf('Consumer[key=%s,secret=%s]', $this->key, $this->secret);
     }
 }

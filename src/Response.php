@@ -11,8 +11,8 @@ namespace Abraham\TwitterOAuth;
  */
 class Response
 {
-    /** @var string|null API path from the most recent request */
-    private $apiPath;
+    /** @var string API path from the most recent request */
+    private $apiPath = '';
     /** @var int HTTP status code from the most recent request */
     private $httpCode = 0;
     /** @var array HTTP headers from the most recent request */
@@ -25,15 +25,15 @@ class Response
     /**
      * @param string $apiPath
      */
-    public function setApiPath(string $apiPath): void
+    public function setApiPath(string $apiPath)
     {
         $this->apiPath = $apiPath;
     }
 
     /**
-     * @return string|null
+     * @return string
      */
-    public function getApiPath(): ?string
+    public function getApiPath(): string
     {
         return $this->apiPath;
     }
@@ -57,7 +57,7 @@ class Response
     /**
      * @param int $httpCode
      */
-    public function setHttpCode(int $httpCode): void
+    public function setHttpCode(int $httpCode)
     {
         $this->httpCode = $httpCode;
     }
@@ -73,7 +73,7 @@ class Response
     /**
      * @param array $headers
      */
-    public function setHeaders(array $headers): void
+    public function setHeaders(array $headers)
     {
         foreach ($headers as $key => $value) {
             if (substr($key, 0, 1) == 'x') {
@@ -94,7 +94,7 @@ class Response
     /**
      * @param array $xHeaders
      */
-    public function setXHeaders(array $xHeaders = []): void
+    public function setXHeaders(array $xHeaders = [])
     {
         $this->xHeaders = $xHeaders;
     }

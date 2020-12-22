@@ -16,13 +16,13 @@ class TwitterOAuthTest extends TestCase
     /** @var TwitterOAuth */
     protected $twitter;
 
-    protected function setUp(): void
+    protected function setUp()
     {
         $this->twitter = new TwitterOAuth(
             CONSUMER_KEY,
             CONSUMER_SECRET,
             ACCESS_TOKEN,
-            ACCESS_TOKEN_SECRET,
+            ACCESS_TOKEN_SECRET
         );
         $this->userId = explode('-', ACCESS_TOKEN)[0];
     }
@@ -74,7 +74,7 @@ class TwitterOAuthTest extends TestCase
             CONSUMER_KEY,
             CONSUMER_SECRET,
             null,
-            $accessToken->access_token,
+            $accessToken->access_token
         );
         $result = $twitter->get('statuses/user_timeline', [
             'screen_name' => 'twitterapi',
@@ -121,9 +121,9 @@ class TwitterOAuthTest extends TestCase
     public function testOauthRequestTokenException()
     {
         $this->expectException(
-            \Abraham\TwitterOAuth\TwitterOAuthException::class,
+            \Abraham\TwitterOAuth\TwitterOAuthException::class
         );
-        $this->expectErrorMessage('Could not authenticate you');
+        $this->expectExceptionMessage('Could not authenticate you');
         $twitter = new TwitterOAuth('CONSUMER_KEY', 'CONSUMER_SECRET');
         $result = $twitter->oauth('oauth/request_token', [
             'oauth_callback' => OAUTH_CALLBACK,
@@ -138,14 +138,14 @@ class TwitterOAuthTest extends TestCase
     {
         // Can't test this without a browser logging into Twitter so check for the correct error instead.
         $this->expectException(
-            \Abraham\TwitterOAuth\TwitterOAuthException::class,
+            \Abraham\TwitterOAuth\TwitterOAuthException::class
         );
-        $this->expectErrorMessage('Invalid oauth_verifier parameter');
+        $this->expectExceptionMessage('Invalid oauth_verifier parameter');
         $twitter = new TwitterOAuth(
             CONSUMER_KEY,
             CONSUMER_SECRET,
             $requestToken['oauth_token'],
-            $requestToken['oauth_token_secret'],
+            $requestToken['oauth_token_secret']
         );
         $twitter->oauth('oauth/access_token', [
             'oauth_verifier' => 'fake_oauth_verifier',
@@ -160,7 +160,7 @@ class TwitterOAuthTest extends TestCase
         ]);
         $this->assertEquals(
             'https://api.twitter.com/oauth/authorize?foo=bar&baz=qux',
-            $url,
+            $url
         );
     }
 
@@ -268,7 +268,7 @@ class TwitterOAuthTest extends TestCase
         $result = $this->twitter->post(
             'direct_messages/events/new',
             $data,
-            true,
+            true
         );
         $this->assertEquals(200, $this->twitter->getLastHttpCode());
         return $result;
@@ -333,7 +333,7 @@ class TwitterOAuthTest extends TestCase
         $result = $this->twitter->upload(
             'media/upload',
             ['media' => $file_path, 'media_type' => 'video/mp4'],
-            true,
+            true
         );
         $this->assertEquals(201, $this->twitter->getLastHttpCode());
         $this->assertObjectHasAttribute('media_id_string', $result);
@@ -379,7 +379,7 @@ class TwitterOAuthTest extends TestCase
         $this->assertEquals(200, $this->twitter->getLastHttpCode());
         $this->assertObjectHasAttribute(
             'statuses',
-            $this->twitter->getLastBody(),
+            $this->twitter->getLastBody()
         );
     }
 
