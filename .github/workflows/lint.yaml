@@ -3,8 +3,16 @@ on: push
 jobs:
   lint:
     runs-on: ubuntu-16.04
+    strategy:
+      fail-fast: false
+      matrix:
+        php-versions: ['7.0']
     steps:
       - uses: actions/checkout@v2
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+          extensions: soap
       - uses: actions/setup-node@v1
         with:
           node-version: 12
