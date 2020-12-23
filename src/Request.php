@@ -11,10 +11,13 @@ namespace Abraham\TwitterOAuth;
 
 class Request
 {
+    const CONTENT_TYPE_JSON = 0;
+    const CONTENT_TYPE_X_WWW_FORM_URLENCODED = 1;
+    const CONTENT_TYPE_MULTIPART_FORMDATA = 2;
+
     protected $parameters;
     protected $httpMethod;
     protected $httpUrl;
-    protected $json;
     public static $version = '1.0';
 
     /**
@@ -46,7 +49,7 @@ class Request
      * @param string     $httpMethod
      * @param string     $httpUrl
      * @param array      $parameters
-     * @param bool       $json
+     * @param int        $contentType
      *
      * @return Request
      */
@@ -56,7 +59,7 @@ class Request
         string $httpMethod,
         string $httpUrl,
         array $parameters = [],
-        $json = false
+        int $contentType = self::CONTENT_TYPE_X_WWW_FORM_URLENCODED
     ) {
         $defaults = [
             'oauth_version' => Request::$version,
@@ -68,12 +71,13 @@ class Request
             $defaults['oauth_token'] = $token->key;
         }
 
-        // The json payload is not included in the signature on json requests,
-        // therefore it shouldn't be included in the parameters array.
-        if ($json) {
-            $parameters = $defaults;
-        } else {
+        // The payload is included in the signature only in
+        // x-www-form-urlencoded requests, therefore it shouldn't be included in
+        // the parameters array otherwise.
+        if ($contentType === self::CONTENT_TYPE_X_WWW_FORM_URLENCODED) {
             $parameters = array_merge($defaults, $parameters);
+        } else {
+            $parameters = $defaults;
         }
 
         return new Request($httpMethod, $httpUrl, $parameters);

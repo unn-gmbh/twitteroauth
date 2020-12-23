@@ -227,7 +227,7 @@ class TwitterOAuth extends Config
      */
     public function get(string $path, array $parameters = [])
     {
-        return $this->http('GET', self::API_HOST, $path, $parameters, false);
+        return $this->http('GET', self::API_HOST, $path, $parameters);
     }
 
     /**
@@ -235,16 +235,22 @@ class TwitterOAuth extends Config
      *
      * @param string $path
      * @param array  $parameters
-     * @param bool   $json
+     * @param int    $contentType
      *
      * @return array|object
      */
     public function post(
         string $path,
         array $parameters = [],
-        bool $json = false
+        int $contentType = Request::CONTENT_TYPE_X_WWW_FORM_URLENCODED
     ) {
-        return $this->http('POST', self::API_HOST, $path, $parameters, $json);
+        return $this->http(
+            'POST',
+            self::API_HOST,
+            $path,
+            $parameters,
+            $contentType
+        );
     }
 
     /**
@@ -257,7 +263,7 @@ class TwitterOAuth extends Config
      */
     public function delete(string $path, array $parameters = [])
     {
-        return $this->http('DELETE', self::API_HOST, $path, $parameters, false);
+        return $this->http('DELETE', self::API_HOST, $path, $parameters);
     }
 
     /**
@@ -270,7 +276,7 @@ class TwitterOAuth extends Config
      */
     public function put(string $path, array $parameters = [])
     {
-        return $this->http('PUT', self::API_HOST, $path, $parameters, false);
+        return $this->http('PUT', self::API_HOST, $path, $parameters);
     }
 
     /**
@@ -278,7 +284,7 @@ class TwitterOAuth extends Config
      *
      * @param string $path
      * @param array  $parameters
-     * @param boolean  $chunked
+     * @param bool   $chunked
      *
      * @return array|object
      */
@@ -310,8 +316,7 @@ class TwitterOAuth extends Config
             [
                 'command' => 'STATUS',
                 'media_id' => $media_id,
-            ],
-            false
+            ]
         );
     }
 
@@ -325,21 +330,52 @@ class TwitterOAuth extends Config
      */
     private function uploadMediaNotChunked(string $path, array $parameters)
     {
-        if (
-            !is_readable($parameters['media']) ||
-            ($file = file_get_contents($parameters['media'])) === false
-        ) {
+        if (isset($parameters['media']) && isset($parameters['media_data'])) {
+            throw new \InvalidArgumentException(
+                'You cannot use both "media" and "media_data" parameters'
+            );
+        }
+
+        if (!isset($parameters['media']) && !isset($parameters['media_data'])) {
+            throw new \InvalidArgumentException(
+                'You must supply the "media" OR "media_data" parameter'
+            );
+        }
+
+        $filename = $parameters['media'] ?? $parameters['media_data'];
+        if (!is_readable($filename)) {
             throw new \InvalidArgumentException(
                 'You must supply a readable file'
             );
         }
-        $parameters['media'] = base64_encode($file);
+
+        if (isset($parameters['media_data'])) {
+            $file = file_get_contents($filename);
+            if ($file === false) {
+                throw new \InvalidArgumentException(
+                    'You must supply a readable file'
+                );
+            }
+
+            $parameters['media_data'] = base64_encode($file);
+
+            return $this->http(
+                'POST',
+                self::UPLOAD_HOST,
+                $path,
+                $parameters,
+                Request::CONTENT_TYPE_MULTIPART_FORMDATA
+            );
+        }
+
+        $file = new \CURLFile($filename);
+        $parameters['media'] = $file;
         return $this->http(
             'POST',
             self::UPLOAD_HOST,
             $path,
             $parameters,
-            false
+            Request::CONTENT_TYPE_MULTIPART_FORMDATA
         );
     }
 
@@ -358,7 +394,7 @@ class TwitterOAuth extends Config
             self::UPLOAD_HOST,
             $path,
             $this->mediaInitParameters($parameters),
-            false
+            Request::CONTENT_TYPE_MULTIPART_FORMDATA
         );
         // Append
         $segmentIndex = 0;
@@ -376,7 +412,7 @@ class TwitterOAuth extends Config
                         fread($media, $this->chunkSize)
                     ),
                 ],
-                false
+                Request::CONTENT_TYPE_MULTIPART_FORMDATA
             );
         }
         fclose($media);
@@ -389,7 +425,7 @@ class TwitterOAuth extends Config
                 'command' => 'FINALIZE',
                 'media_id' => $init->media_id_string,
             ],
-            false
+            Request::CONTENT_TYPE_MULTIPART_FORMDATA
         );
         return $finalize;
     }
@@ -398,7 +434,7 @@ class TwitterOAuth extends Config
      * Private method to get params for upload media chunked init.
      * Twitter docs: https://dev.twitter.com/rest/reference/post/media/upload-init.html
      *
-     * @param array  $parameters
+     * @param array $parameters
      *
      * @return array
      */
@@ -424,7 +460,7 @@ class TwitterOAuth extends Config
     /**
      * Cleanup any parameters that are known not to work.
      *
-     * @param array  $parameters
+     * @param array $parameters
      *
      * @return array
      */
@@ -444,7 +480,7 @@ class TwitterOAuth extends Config
      * @param string $host
      * @param string $path
      * @param array  $parameters
-     * @param bool   $json
+     * @param int    $contentType
      *
      * @return array|object
      */
@@ -453,27 +489,26 @@ class TwitterOAuth extends Config
         string $host,
         string $path,
         array $parameters,
-        bool $json
+        int $contentType = Request::CONTENT_TYPE_X_WWW_FORM_URLENCODED
     ) {
         $this->resetLastResponse();
         $this->resetAttemptsNumber();
         $url = sprintf('%s/%s/%s.json', $host, self::API_VERSION, $path);
         $this->response->setApiPath($path);
-        if (!$json) {
+        if ($contentType !== Request::CONTENT_TYPE_JSON) {
             $parameters = $this->cleanUpParameters($parameters);
         }
-        return $this->makeRequests($url, $method, $parameters, $json);
+        return $this->makeRequests($url, $method, $parameters, $contentType);
     }
 
     /**
-     *
      * Make requests and retry them (if enabled) in case of Twitter's problems.
      *
      * @param string $method
      * @param string $url
      * @param string $method
      * @param array  $parameters
-     * @param bool   $json
+     * @param int    $contentType
      *
      * @return array|object
      */
@@ -481,11 +516,16 @@ class TwitterOAuth extends Config
         string $url,
         string $method,
         array $parameters,
-        bool $json
+        int $contentType = Request::CONTENT_TYPE_X_WWW_FORM_URLENCODED
     ) {
         do {
             $this->sleepIfNeeded();
-            $result = $this->oAuthRequest($url, $method, $parameters, $json);
+            $result = $this->oAuthRequest(
+                $url,
+                $method,
+                $parameters,
+                $contentType
+            );
             $response = JsonDecoder::decode($result, $this->decodeJsonAsArray);
             $this->response->setBody($response);
             $this->attempts++;
@@ -513,7 +553,7 @@ class TwitterOAuth extends Config
      * @param string $url
      * @param string $method
      * @param array  $parameters
-     * @param bool   $json
+     * @param int    $contentType
      *
      * @return string
      * @throws TwitterOAuthException
@@ -522,7 +562,7 @@ class TwitterOAuth extends Config
         string $url,
         string $method,
         array $parameters,
-        bool $json = false
+        int $contentType = Request::CONTENT_TYPE_X_WWW_FORM_URLENCODED
     ) {
         $request = Request::fromConsumerAndToken(
             $this->consumer,
@@ -530,7 +570,7 @@ class TwitterOAuth extends Config
             $method,
             $url,
             $parameters,
-            $json
+            $contentType
         );
         if (array_key_exists('oauth_callback', $parameters)) {
             // Twitter doesn't like oauth_callback as a parameter.
@@ -556,7 +596,7 @@ class TwitterOAuth extends Config
             $method,
             $authorization,
             $parameters,
-            $json
+            $contentType
         );
     }
 
@@ -602,8 +642,8 @@ class TwitterOAuth extends Config
      * @param string $url
      * @param string $method
      * @param string $authorization
-     * @param array $postfields
-     * @param bool $json
+     * @param array  $postfields
+     * @param int    $contentType
      *
      * @return string
      * @throws TwitterOAuthException
@@ -613,7 +653,7 @@ class TwitterOAuth extends Config
         string $method,
         string $authorization,
         array $postfields,
-        bool $json = false
+        int $contentType = Request::CONTENT_TYPE_X_WWW_FORM_URLENCODED
     ): string {
         $options = $this->curlOptions();
         $options[CURLOPT_URL] = $url;
@@ -628,14 +668,22 @@ class TwitterOAuth extends Config
                 break;
             case 'POST':
                 $options[CURLOPT_POST] = true;
-                if ($json) {
-                    $options[CURLOPT_HTTPHEADER][] =
-                        'Content-type: application/json';
-                    $options[CURLOPT_POSTFIELDS] = json_encode($postfields);
-                } else {
-                    $options[CURLOPT_POSTFIELDS] = Util::buildHttpQuery(
-                        $postfields
-                    );
+                switch ($contentType) {
+                    case Request::CONTENT_TYPE_JSON:
+                        $options[CURLOPT_HTTPHEADER][] =
+                            'Content-type: application/json';
+                        $options[CURLOPT_POSTFIELDS] = json_encode($postfields);
+                        break;
+                    case Request::CONTENT_TYPE_MULTIPART_FORMDATA:
+                        $options[CURLOPT_HTTPHEADER][] =
+                            'Content-type: multipart/form-data';
+                        $options[CURLOPT_POSTFIELDS] = $postfields;
+                        break;
+                    default:
+                        $options[CURLOPT_POSTFIELDS] = Util::buildHttpQuery(
+                            $postfields
+                        );
+                        break;
                 }
                 break;
             case 'DELETE':

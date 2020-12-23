@@ -90,7 +90,7 @@ class Config
     /**
      * Whether to encode the curl requests with gzip or not.
      *
-     * @param boolean $gzipEncoding
+     * @param bool $gzipEncoding
      */
     public function setGzipEncoding(bool $gzipEncoding)
     {
