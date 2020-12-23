@@ -309,15 +309,10 @@ class TwitterOAuth extends Config
      */
     public function mediaStatus(string $media_id)
     {
-        return $this->http(
-            'GET',
-            self::UPLOAD_HOST,
-            'media/upload',
-            [
-                'command' => 'STATUS',
-                'media_id' => $media_id,
-            ]
-        );
+        return $this->http('GET', self::UPLOAD_HOST, 'media/upload', [
+            'command' => 'STATUS',
+            'media_id' => $media_id,
+        ]);
     }
 
     /**
